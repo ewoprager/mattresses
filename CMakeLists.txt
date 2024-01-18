@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
+set(CMAKE_INSTALL_PREFIX "/Users/eprager/local")
 
 file(
 GLOB_RECURSE HEADERS
@@ -21,7 +22,7 @@ add_library(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} PUBLIC
                            "${CMAKE_CURRENT_SOURCE_DIR}/${HEADERS}"
-                           "/usr/local/include/"
+                           "/Users/eprager/local/include/"
                            )
 
 target_link_libraries(${PROJECT_NAME} macros)
