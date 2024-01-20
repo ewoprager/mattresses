@@ -182,8 +182,8 @@ protected: \
 vec<2, T> element1##element2() const { return {element1, element2}; } \
 struct element1##element2##_reference : public subset2_reference_parent { \
 	element1##element2##_reference(vec &_owner) : subset2_reference_parent(_owner) {} \
-	void operator=(const vec<2, T> &other) override { owner.element1 = other.x; owner.element2 = other.y; } \
-	operator vec<2, T> () const override { return owner.element1##element2(); } \
+	void operator=(const vec<2, T> &other) override { subset2_reference_parent::owner.element1 = other.x; subset2_reference_parent::owner.element2 = other.y; } \
+	operator vec<2, T> () const override { return subset2_reference_parent::owner.element1##element2(); } \
 }; \
 element1##element2##_reference element1##element2##_r(){ return element1##element2##_reference(*this); }
 
@@ -191,8 +191,8 @@ element1##element2##_reference element1##element2##_r(){ return element1##elemen
 vec<3, T> element1##element2##element3() const { return {element1, element2, element3}; } \
 struct element1##element2##element3##_reference : public subset3_reference_parent { \
 	element1##element2##element3##_reference(vec &_owner) : subset3_reference_parent(_owner) {} \
-	void operator=(const vec<3, T> &other) override { owner.element1 = other.x; owner.element2 = other.y; owner.element3 = other.z; } \
-	operator vec<3, T> () const override { return owner.element1##element2##element3(); } \
+	void operator=(const vec<3, T> &other) override { subset3_reference_parent::owner.element1 = other.x; subset3_reference_parent::owner.element2 = other.y; subset3_reference_parent::owner.element3 = other.z; } \
+	operator vec<3, T> () const override { return subset3_reference_parent::owner.element1##element2##element3(); } \
 }; \
 element1##element2##element3##_reference element1##element2##element3##_r(){ return element1##element2##element3##_reference(*this); }
 
@@ -218,15 +218,16 @@ FINISH_DEFINE_N_VECTOR_SPECIALISATION(2, x, y)
 
 START_DEFINE_N_VECTOR_SPECIALISATION(3, x, y, z)
 
-//DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
-//FOR_EACH_PAIR(_VECTOR_DEFINE_SUBSET_2,
-//			  x, y,
-//			  y, x,
-//			  x, z,
-//			  z, x,
-//			  y, z,
-//			  z, y
-//)
+DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
+
+FOR_EACH_PAIR(_VECTOR_DEFINE_SUBSET_2,
+			  x, y,
+			  y, x,
+			  x, z,
+			  z, x,
+			  y, z,
+			  z, y
+)
 
 FINISH_DEFINE_N_VECTOR_SPECIALISATION(3, x, y, z)
 template<typename T> vec<3, T> Cross(const vec<3, T> &lhs, const vec<3, T> &rhs){
@@ -235,57 +236,59 @@ template<typename T> vec<3, T> Cross(const vec<3, T> &lhs, const vec<3, T> &rhs)
 
 START_DEFINE_N_VECTOR_SPECIALISATION(4, x, y, z, w)
 
-//DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
-//FOR_EACH_PAIR(_VECTOR_DEFINE_SUBSET_2,
-//			  x, y,
-//			  y, x,
-//			  
-//			  x, z,
-//			  z, x,
-//			  
-//			  x, w,
-//			  w, x,
-//			  
-//			  y, z,
-//			  z, y,
-//			  
-//			  y, w,
-//			  w, y,
-//			  
-//			  z, w,
-//			  w, z
-//)
-//
-//DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(3)
-//FOR_EACH_TRIPLE(_VECTOR_DEFINE_SUBSET_3,
-//				x, y, z,
-//				z, x, y,
-//				y, z, x,
-//				x, z, y,
-//				y, x, z,
-//				z, y, x,
-//				
-//				x, y, w,
-//				w, x, y,
-//				y, w, x,
-//				x, w, y,
-//				y, x, w,
-//				w, y, x,
-//				
-//				x, w, z,
-//				z, x, w,
-//				w, z, x,
-//				x, z, w,
-//				w, x, z,
-//				z, w, x,
-//				
-//				w, y, z,
-//				z, w, y,
-//				y, z, w,
-//				w, z, y,
-//				y, w, z,
-//				z, y, w
-//)
+DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
+
+FOR_EACH_PAIR(_VECTOR_DEFINE_SUBSET_2,
+			  x, y,
+			  y, x,
+			  
+			  x, z,
+			  z, x,
+			  
+			  x, w,
+			  w, x,
+			  
+			  y, z,
+			  z, y,
+			  
+			  y, w,
+			  w, y,
+			  
+			  z, w,
+			  w, z
+)
+
+DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(3)
+
+FOR_EACH_TRIPLE(_VECTOR_DEFINE_SUBSET_3,
+				x, y, z,
+				z, x, y,
+				y, z, x,
+				x, z, y,
+				y, x, z,
+				z, y, x,
+				
+				x, y, w,
+				w, x, y,
+				y, w, x,
+				x, w, y,
+				y, x, w,
+				w, y, x,
+				
+				x, w, z,
+				z, x, w,
+				w, z, x,
+				x, z, w,
+				w, x, z,
+				z, w, x,
+				
+				w, y, z,
+				z, w, y,
+				y, z, w,
+				w, z, y,
+				y, w, z,
+				z, y, w
+)
 
 FINISH_DEFINE_N_VECTOR_SPECIALISATION(4, x, y, z, w)
 
@@ -443,13 +446,13 @@ template <uint8_t N, uint8_t M, typename T> inline T Dot(const typename mat<N, M
 	return ret;
 }
 
-template <uint8_t N1, uint8_t MN, uint8_t M2, typename T> inline mat<N1, M2, T> Dot(const mat<N1, MN, T> &lhs, const mat<MN, M2, T> &rhs){
+template <uint8_t N1, uint8_t MN, uint8_t M2, typename T> inline mat<N1, M2, T> operator &(const mat<N1, MN, T> &lhs, const mat<MN, M2, T> &rhs){
 	mat<N1, M2, T> ret;
 	for(int m=0; m<M2; m++) for(int n=0; n<N1; n++) ret[m][n] = Dot<N1, MN, T>(lhs(n), rhs[m]);
 	return ret;
 }
 
-template <uint8_t N, uint8_t M, typename T> inline vec<N, T> Dot(const mat<N, M, T> &matrix, const vec<M, T> &vector){
+template <uint8_t N, uint8_t M, typename T> inline vec<N, T> operator &(const mat<N, M, T> &matrix, const vec<M, T> &vector){
 	vec<N, T> ret;
 	for(int n=0; n<N; n++) ret[n] = Dot<N, M, T>(matrix(n), vector);
 	return ret;
@@ -501,7 +504,7 @@ DEFINE_SQUARE_MATRIX_SPECIALISATIONS(4)
 // member functions
 mat ScaledExcludingTranslation(const vec<3, T> &scaling){
 	const vec<3, T> savedTranslation = columns[3].xyz();
-	mat ret = Dot(Scaling(scaling), *this);
+	mat ret = Scaling(scaling) & *this;
 	ret[3].xyz_r() = savedTranslation;
 	return ret;
 }
@@ -612,10 +615,10 @@ static mat PerspectiveProjection(const double angleOfView, const double aspectRa
 	const T f = tan(0.5 * (M_PI - angleOfView));
 	const T frustumDepthInverse = 1.0 / (frustumNear - frustumFar);
 	return {{
-		{f / aspectRatio, 0.0,                                                  0.0,  0.0},
+		{T(f / aspectRatio), 0.0,                                                  0.0,  0.0},
 		{            0.0,   f,                                                  0.0,  0.0},
-		{            0.0, 0.0,     (frustumNear + frustumFar) * frustumDepthInverse, -1.0},
-		{            0.0, 0.0, frustumNear * frustumFar * frustumDepthInverse * 2.0,  0.0}
+		{            0.0, 0.0,     T((frustumNear + frustumFar) * frustumDepthInverse), -1.0},
+		{            0.0, 0.0, T(frustumNear * frustumFar * frustumDepthInverse * 2.0),  0.0}
 	}};
 }
 static mat OrthographicProjection(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar){
@@ -623,9 +626,9 @@ static mat OrthographicProjection(const float left, const float right, const flo
 	const T heightInv = 1.0 / (top - bottom);
 	const T zDeltaInv = 1.0 / (zFar - zNear);
 	return {{
-		{2.0 * dirInv, 			   0.0,        0.0,    -(right + left)*dirInv},
-		{	  	  0.0, 2.0 * heightInv,        0.0, -(top + bottom)*heightInv},
-		{		  0.0,             0.0, -zDeltaInv,           zNear*zDeltaInv},
+		{T(2.0 * dirInv), 			   0.0,        0.0,    T(-(right + left)*dirInv)},
+		{	  	  0.0, T(2.0 * heightInv),        0.0, T(-(top + bottom)*heightInv)},
+		{		  0.0,             0.0, T(-zDeltaInv),           T(zNear*zDeltaInv)},
 		{		  0.0,		       0.0,        0.0,		                  1.0}
 	}};
 }
