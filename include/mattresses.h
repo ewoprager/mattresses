@@ -171,8 +171,8 @@ DEFINE_N_VECTOR_GLOBAL_SPECIALISATIONS(uint8_t_size, vector_elements)
 struct subset##N##_reference_parent { \
 	subset##N##_reference_parent(vec &_owner) : owner(_owner) {} \
 	 \
-	virtual void operator=(const vec &other) = 0; \
-	virtual operator vec () const = 0; \
+	virtual void operator=(const vec<N, T> &other) = 0; \
+	virtual operator vec<N, T> () const = 0; \
 	 \
 protected: \
 	vec &owner; \
