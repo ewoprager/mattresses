@@ -32,6 +32,7 @@ template <uint8_t N, typename T=float> struct vec {
 	static vec Zero(){ vec ret; memset(ret.elements, 0, N * sizeof(T)); return ret; }
 	static vec One(){ vec ret; for(int i=0; i<N; i++) ret[i] = 1.0; return ret; }
 	static vec PositiveCartesianUnit(uint8_t n){ vec ret = vec::Zero(); ret[n] = 1.0; return ret; }
+	template <typename T_function_t> static vec FromFunction(T_function_t function){ vec ret; for(int i=0; i<N; ++i) ret[i] = function(); return ret; }
 };
 
 template <uint8_t N, typename T> inline std::ostream &operator<<(std::ostream &stream, const vec<N, T> &vector){
@@ -95,6 +96,7 @@ DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(/)
 #define _N_VECTOR_ZERO(element) 0.0
 #define _N_VECTOR_ONE(element) 1.0
 #define _N_VECTOR_SQ(element) element * element
+#define _N_VECTOR_FUNCTION(element) function()
 
 #define _N_VECTOR_UNARY_OPERATION(_operator, element) element _operator other.element;
 #define _N_VECTOR_FLOAT_UNARY_OPERATION(_operator, element) element _operator f;
@@ -125,7 +127,8 @@ template <typename T> struct vec<uint8_t_size, T> { \
 \
 	static vec Zero(){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_ZERO, vector_elements)}; } \
 	static vec One(){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_ONE, vector_elements)}; } \
-	static vec PositiveCartesianUnit(uint8_t n){ vec ret = vec::Zero(); ret[n] = 1.0; return ret; }
+	static vec PositiveCartesianUnit(uint8_t n){ vec ret = vec::Zero(); ret[n] = 1.0; return ret; } \
+	template <typename T_function_t> static vec FromFunction(T_function_t function){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_FUNCTION, vector_elements)}; }
 
 #define FINISH_DEFINE_N_VECTOR_STRUCT_SPECIALISATION(uint8_t_size, vector_elements...) \
 };
