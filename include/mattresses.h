@@ -5,6 +5,12 @@
 
 #include <macros.h>
 
+// macros for counting number of arguments
+#define ELEVENTH_ARGUMENT(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, ...) a11
+#define COUNT_ARGUMENTS(...) ELEVENTH_ARGUMENT(dummy, ## __VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+
+
+
 #define DEFINE_VECTOR_UNARY_OPERATOR_OVERLOADS(_operator) \
 vec &operator _operator (const vec &other){ \
 	for(int i=0; i<N; i++) elements[i] _operator other[i]; \
@@ -28,6 +34,8 @@ template <uint8_t N, typename T=float> struct vec {
 	DEFINE_VECTOR_UNARY_OPERATOR_OVERLOADS(+=)
 	DEFINE_VECTOR_UNARY_OPERATOR_OVERLOADS(-=)
 	DEFINE_VECTOR_UNARY_OPERATOR_OVERLOADS(/=)
+	
+	template <typename other_t> operator vec<N, other_t>() const { vec ret; for(int i=0; i<N; ++i) ret[i] = static_cast<other_t>(elements[i]); return ret; }
 	
 	static vec Zero(){ vec ret; memset(ret.elements, 0, N * sizeof(T)); return ret; }
 	static vec One(){ vec ret; for(int i=0; i<N; i++) ret[i] = 1.0; return ret; }
@@ -89,14 +97,21 @@ DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(+)
 DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(-)
 DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(/)
 
+template <uint8_t N, typename T> inline bool operator==(const vec<N, T> &lhs, const vec<N, T> &rhs){
+	bool ret = true;
+	for(int n=0; n<N; ++n) ret &= (lhs.elements[n] == rhs.elements[n]);
+	return ret;
+}
 
 #define _N_VECTOR_ELEMENT(element) T element;
 #define _N_VECTOR_OSTREAM(element) vector.element
 #define _N_VECTOR_DOT(element) lhs.element * rhs.element
+#define _N_VECTOR_EQUAL(element) (lhs.element == rhs.element)
 #define _N_VECTOR_ZERO(element) 0.0
 #define _N_VECTOR_ONE(element) 1.0
 #define _N_VECTOR_SQ(element) element * element
 #define _N_VECTOR_FUNCTION(element) function()
+#define _N_VECTOR_CAST(element) static_cast<other_t>(element)
 
 #define _N_VECTOR_UNARY_OPERATION(_operator, element) element _operator other.element;
 #define _N_VECTOR_FLOAT_UNARY_OPERATION(_operator, element) element _operator f;
@@ -124,6 +139,8 @@ template <typename T> struct vec<uint8_t_size, T> { \
 	DEFINE_N_VECTOR_UNARY_OPERATOR_OVERLOADS(+=, vector_elements) \
 	DEFINE_N_VECTOR_UNARY_OPERATOR_OVERLOADS(-=, vector_elements) \
 	DEFINE_N_VECTOR_UNARY_OPERATOR_OVERLOADS(/=, vector_elements) \
+\
+	template <typename other_t> operator vec< COUNT_ARGUMENTS(vector_elements) , other_t>() const { return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_CAST, vector_elements)}; } \
 \
 	static vec Zero(){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_ZERO, vector_elements)}; } \
 	static vec One(){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_ONE, vector_elements)}; } \
@@ -154,6 +171,9 @@ template <typename T> inline T Dot(const vec<uint8_t_size, T> &lhs, const vec<ui
 template <typename T> inline std::ostream &operator<<(std::ostream &stream, const vec<uint8_t_size, T> &vector){ \
 	stream << "(" << CUSTOM_SEPARATED_FOR_EACH(_N_VECTOR_OSTREAM, << ", " <<, vector_elements) << ")"; \
 	return stream; \
+} \
+template <typename T> inline bool operator==(const vec<uint8_t_size, T> &lhs, const vec<uint8_t_size, T> &rhs){ \
+	return CUSTOM_SEPARATED_FOR_EACH(_N_VECTOR_EQUAL, &&, vector_elements); \
 } \
 _N_VECTOR_BINARY_OPERATOR_OVERLOADS(*, uint8_t_size, vector_elements) \
 _N_VECTOR_BINARY_OPERATOR_OVERLOADS(+, uint8_t_size, vector_elements) \
