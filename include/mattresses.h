@@ -35,7 +35,7 @@ template <uint8_t N, typename T=float> struct vec {
 	DEFINE_VECTOR_UNARY_OPERATOR_OVERLOADS(-=)
 	DEFINE_VECTOR_UNARY_OPERATOR_OVERLOADS(/=)
 	
-	template <typename other_t> operator vec<N, other_t>() const { vec ret; for(int i=0; i<N; ++i) ret[i] = static_cast<other_t>(elements[i]); return ret; }
+	template <typename other_t> operator vec<N, other_t>() const { vec<N, other_t> ret; for(int i=0; i<N; ++i) ret[i] = static_cast<other_t>(elements[i]); return ret; }
 	
 	static vec Zero(){ vec ret; memset(ret.elements, 0, N * sizeof(T)); return ret; }
 	static vec One(){ vec ret; for(int i=0; i<N; i++) ret[i] = 1.0; return ret; }
