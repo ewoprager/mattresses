@@ -9,15 +9,12 @@
 
 #include <macros.h>
 
+
 // ----- Internal tools -----
+
 namespace mattresses {
 
 struct empty_t {};
-
-template <size_t d> consteval bool DimensionalityHasX(){ return d >= 1 && d <= 4; }
-template <size_t d> consteval bool DimensionalityHasY(){ return d >= 2 && d <= 4; }
-template <size_t d> consteval bool DimensionalityHasZ(){ return d >= 3 && d <= 4; }
-template <size_t d> consteval bool DimensionalityHasW(){ return d == 4; }
 
 template <typename T, typename return_t, typename... param_ts>
 concept function_c = requires (const T &function, param_ts&&... params) {
@@ -25,6 +22,9 @@ concept function_c = requires (const T &function, param_ts&&... params) {
 };
 
 } // namespace mattresses
+
+
+// ----- Vectors -----
 
 #define MATTRESSES_VECTOR_MUTATION_OPERATOR_OVERLOADS(_operator) \
 vec &operator _operator (const vec &other){ \
@@ -44,11 +44,12 @@ vec &operator _operator (T f){ \
 	return *this; \
 }
 
-// ----- Vectors -----
-
 template <size_t N, typename T=float> struct vec : std::array<T, N> {
 	
-	static constexpr bool have_x = mattresses::DimensionalityHasX<N>();
+	static constexpr bool have_x = (N >= 1 && N <= 4);
+	static constexpr bool have_y = (N >= 2 && N <= 4);
+	static constexpr bool have_z = (N >= 3 && N <= 4);
+	static constexpr bool have_w = (N == 4);
 	
 	std::conditional_t<have_x, T &, mattresses::empty_t> x = [this]() -> std::conditional_t<have_x, T &, mattresses::empty_t> {
 		if constexpr (have_x) {
@@ -58,8 +59,6 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 		}
 	}();
 	
-	static constexpr bool have_y = mattresses::DimensionalityHasY<N>();
-	
 	std::conditional_t<have_y, T &, mattresses::empty_t> y = [this]() -> std::conditional_t<have_y, T &, mattresses::empty_t> {
 		if constexpr (have_y) {
 			return std::array<T, N>::at(1);
@@ -68,8 +67,6 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 		}
 	}();
 	
-	static constexpr bool have_z = mattresses::DimensionalityHasZ<N>();
-	
 	std::conditional_t<have_z, T &, mattresses::empty_t> z = [this]() -> std::conditional_t<have_z, T &, mattresses::empty_t> {
 		if constexpr (have_z) {
 			return std::array<T, N>::at(2);
@@ -77,8 +74,6 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 			return mattresses::empty_t{};
 		}
 	}();
-	
-	static constexpr bool have_w = mattresses::DimensionalityHasW<N>();
 	
 	std::conditional_t<have_w, T &, mattresses::empty_t> w = [this]() -> std::conditional_t<have_w, T &, mattresses::empty_t> {
 		if constexpr (have_w) {
@@ -95,38 +90,6 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 	}
 	
 	vec Normalised() const { return *this / sqrt(SqMag()); }
-	
-	
-	// 2-dimensional vectors
-	// -----
-	std::conditional_t<N == 2, vec, mattresses::empty_t> Crossed() const {
-		if constexpr (N == 2) {
-			return vec{-y, x};
-		} else {
-			return mattresses::empty_t{};
-		}
-	}
-	std::conditional_t<N == 2, double, mattresses::empty_t> Angle() const {
-		if constexpr (N == 2) {
-			return atan2(y, x);
-		} else {
-			return mattresses::empty_t{};
-		}
-	}
-	static std::conditional_t<N == 2, vec, mattresses::empty_t> UnitInDirection(double angle) {
-		if constexpr (N == 2) {
-			return {(T)cos(angle), (T)sin(angle)};
-		} else {
-			return mattresses::empty_t{};
-		}
-	}
-	static std::conditional_t<N == 2, vec, mattresses::empty_t> RandomUnit(size_t precision=1000) {
-		if constexpr (N == 2) {
-			return UnitInDirection(2.0 * M_PI * double(rand() % precision) / double(precision));
-		} else {
-			return mattresses::empty_t{};
-		}
-	}
 	
 	MATTRESSES_VECTOR_MUTATION_OPERATOR_OVERLOADS(*=)
 	MATTRESSES_VECTOR_MUTATION_OPERATOR_OVERLOADS(+=)
@@ -170,6 +133,21 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 		return [&]<size_t... indices>(std::index_sequence<indices...>){
 			return vec{ (void(indices), function(std::forward<param_ts>(params)...)) ... };
 		}(std::make_index_sequence<N>{});
+	}
+	
+	// 2-dimensional vectors
+	// -----
+	vec Crossed() const requires (N == 2) {
+		return vec{-y, x};
+	}
+	double Angle() const requires (N == 2) {
+		return atan2(y, x);
+	}
+	static vec UnitInDirection(double angle) requires (N == 2) {
+		return {(T)cos(angle), (T)sin(angle)};
+	}
+	static vec RandomUnit(size_t precision=1000) requires (N == 2) {
+		return UnitInDirection(2.0 * M_PI * double(rand() % precision) / double(precision));
 	}
 };
 
@@ -244,92 +222,6 @@ template <typename T> struct quat : public vec<4, T> {
 
 };
 
-//#define _N_VECTOR_ELEMENT(element) T element;
-//#define _N_VECTOR_OSTREAM(element) vector.element
-//#define _N_VECTOR_DOT(element) lhs.element * rhs.element
-//#define _N_VECTOR_EQUAL(element) (lhs.element == rhs.element)
-//#define _N_VECTOR_ZERO(element) T(0)
-//#define _N_VECTOR_ONE(element) T(1)
-//#define _N_VECTOR_SQ(element) element * element
-//#define _N_VECTOR_FUNCTION(element) function()
-//#define _N_VECTOR_CAST(element) static_cast<other_t>(element)
-//
-//#define _N_VECTOR_MUTATION_OPERATION(_operator, element) element _operator other.element;
-//#define _N_VECTOR_FLOAT_MUTATION_OPERATION(_operator, element) element _operator f;
-//#define DEFINE_N_VECTOR_MUTATION_OPERATOR_OVERLOADS(_operator, vector_elements...) \
-//vec &operator _operator (const vec &other){ \
-//	FOR_EACH_EX(_N_VECTOR_MUTATION_OPERATION, _operator, vector_elements) \
-//	return *this; \
-//} \
-//vec &operator _operator (T f){ \
-//	FOR_EACH_EX(_N_VECTOR_FLOAT_MUTATION_OPERATION, _operator, vector_elements) \
-//	return *this; \
-//}
-//
-//#define START_DEFINE_N_VECTOR_STRUCT_SPECIALISATION(size_t_size, vector_elements...) \
-//template <typename T> struct vec<size_t_size, T> { \
-//	const T &operator[](size_t n) const { return ((T *)this)[n]; } \
-//	T &operator[](size_t n){ return ((T *)this)[n]; } \
-//\
-//	FOR_EACH(_N_VECTOR_ELEMENT, vector_elements) \
-//\
-//	T SqMag() const { return CUSTOM_SEPARATED_FOR_EACH(_N_VECTOR_SQ, +, vector_elements); } \
-//    vec Normalised() const { vec ret = *this; ret /= sqrtf(ret.SqMag()); return ret; } \
-//\
-//	DEFINE_N_VECTOR_MUTATION_OPERATOR_OVERLOADS(*=, vector_elements) \
-//	DEFINE_N_VECTOR_MUTATION_OPERATOR_OVERLOADS(+=, vector_elements) \
-//	DEFINE_N_VECTOR_MUTATION_OPERATOR_OVERLOADS(-=, vector_elements) \
-//	DEFINE_N_VECTOR_MUTATION_OPERATOR_OVERLOADS(/=, vector_elements) \
-//\
-//	template <typename other_t> operator vec<size_t_size, other_t>() const { return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_CAST, vector_elements)}; } \
-//\
-//	static vec Zero(){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_ZERO, vector_elements)}; } \
-//	static vec One(){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_ONE, vector_elements)}; } \
-//	static vec PositiveCartesianUnit(uint8_t n){ vec ret = vec::Zero(); ret[n] = T(1); return ret; } \
-//	template <typename T_function_t> static vec FromFunction(T_function_t function){ return {COMMA_SEPARATED_FOR_EACH(_N_VECTOR_FUNCTION, vector_elements)}; }
-//
-//#define FINISH_DEFINE_N_VECTOR_STRUCT_SPECIALISATION(uint8_t_size, vector_elements...) \
-//};
-//
-//#define _N_VECTOR_BINARY_OPERATION(_operator, element) lhs.element _operator rhs.element
-//#define _N_FLOAT_VECTOR_BINARY_OPERATION(_operator, element) lhs _operator rhs.element
-//#define _N_VECTOR_FLOAT_BINARY_OPERATION(_operator, element) lhs.element _operator rhs
-//#define _N_VECTOR_BINARY_OPERATOR_OVERLOADS(_operator, uint8_t_size, vector_elements...) \
-//template <typename T> inline vec<uint8_t_size, T> operator _operator (const vec<uint8_t_size, T> &lhs, const vec<uint8_t_size, T> &rhs){ \
-//	return { COMMA_SEPARATED_FOR_EACH_EX(_N_VECTOR_BINARY_OPERATION, _operator, vector_elements) }; \
-//} \
-//template <typename T> inline vec<uint8_t_size, T> operator _operator (T lhs, const vec<uint8_t_size, T> &rhs){ \
-//	return { COMMA_SEPARATED_FOR_EACH_EX(_N_FLOAT_VECTOR_BINARY_OPERATION, _operator, vector_elements) }; \
-//} \
-//template <typename T> inline vec<uint8_t_size, T> operator _operator (const vec<uint8_t_size, T> &lhs, T rhs){ \
-//	return { COMMA_SEPARATED_FOR_EACH_EX(_N_VECTOR_FLOAT_BINARY_OPERATION, _operator, vector_elements) }; \
-//}
-//
-//#define DEFINE_N_VECTOR_GLOBAL_SPECIALISATIONS(uint8_t_size, vector_elements...) \
-//template <typename T> inline T Dot(const vec<uint8_t_size, T> &lhs, const vec<uint8_t_size, T> &rhs){ \
-//   return CUSTOM_SEPARATED_FOR_EACH(_N_VECTOR_DOT, +, vector_elements); \
-//} \
-//template <typename T> inline std::ostream &operator<<(std::ostream &stream, const vec<uint8_t_size, T> &vector){ \
-//	stream << "(" << CUSTOM_SEPARATED_FOR_EACH(_N_VECTOR_OSTREAM, << ", " <<, vector_elements) << ")"; \
-//	return stream; \
-//} \
-//template <typename T> inline bool operator==(const vec<uint8_t_size, T> &lhs, const vec<uint8_t_size, T> &rhs){ \
-//	return CUSTOM_SEPARATED_FOR_EACH(_N_VECTOR_EQUAL, &&, vector_elements); \
-//} \
-//_N_VECTOR_BINARY_OPERATOR_OVERLOADS(*, uint8_t_size, vector_elements) \
-//_N_VECTOR_BINARY_OPERATOR_OVERLOADS(+, uint8_t_size, vector_elements) \
-//_N_VECTOR_BINARY_OPERATOR_OVERLOADS(-, uint8_t_size, vector_elements) \
-//_N_VECTOR_BINARY_OPERATOR_OVERLOADS(/, uint8_t_size, vector_elements)
-//
-//
-//
-//#define START_DEFINE_N_VECTOR_SPECIALISATION(uint8_t_size, vector_elements...) \
-//START_DEFINE_N_VECTOR_STRUCT_SPECIALISATION(uint8_t_size, vector_elements)
-//
-//#define FINISH_DEFINE_N_VECTOR_SPECIALISATION(uint8_t_size, vector_elements...) \
-//FINISH_DEFINE_N_VECTOR_STRUCT_SPECIALISATION(uint8_t_size, vector_elements) \
-//DEFINE_N_VECTOR_GLOBAL_SPECIALISATIONS(uint8_t_size, vector_elements)
-//
 //
 //#define DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(N) \
 //struct subset##N##_reference_parent { \
@@ -441,15 +333,10 @@ template <typename T> struct quat : public vec<4, T> {
 
 // ----- Matrices -----
 
-// N x M, meaning N rows & M columns
-//#define _MATRIX_TEMPLATE_PARAMETER(param_name) uint8_t param_name
-//#define START_MATRIX_TEMPLATE(N, M, ...) \
-//template < __VA_OPT__( COMMA_SEPARATED_FOR_EACH(_MATRIX_TEMPLATE_PARAMETER, __VA_ARGS__) ) __VA_OPT__(,) typename T=float> struct mat { \
-//_CONTINUE_MATRIX_TEMPLATE(N, M)
-
-//#define START_MATRIX_TEMPLATE_SPECIALISATION(N, M, ...) \
-// \
-//_CONTINUE_MATRIX_TEMPLATE(N, M)
+/*
+ - N x M, meaning N rows & M columns
+ - Matrices are stored column-major
+ */
 
 #define _MATRIX_MUTATION_OPERATOR_OVERLOADS(_operator) \
 mat &operator _operator (const mat &other){ \

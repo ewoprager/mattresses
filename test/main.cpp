@@ -30,8 +30,9 @@ int main(int argc, char *argv[]){
 	vec<4, uint8_t> iv = v;
 	std::cout << static_cast<vec<4, int>>(iv) << "\n";
 	
-	vec<2> v2 = {-1.0f, 0.5f};
+	vec<2> v2 = vec<2>::UnitInDirection(1.5);
 	std::cout << v2.Crossed() << "\n";
+	std::cout << v2.Angle() << "\n";
 	
 	vec<3> v3a = {1.0f, 1.1f, 1.2f};
 	vec<3> v3b = {-2.0f, -1.1f, 1.2f};
