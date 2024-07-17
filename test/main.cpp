@@ -7,6 +7,8 @@ int main(int argc, char *argv[]){
 	vec<4> v = vec<4>::Zero();
 	std::cout << v << "\n";
 	
+	std::cout << sizeof(v) << "\n";
+	
 	v.x += 1.0f;
 	std::cout << v << "\n";
 	
@@ -31,11 +33,13 @@ int main(int argc, char *argv[]){
 	std::cout << static_cast<vec<4, int>>(iv) << "\n";
 	
 	vec<2> v2 = vec<2>::UnitInDirection(1.5);
+	std::cout << sizeof(v2) << "\n";
 	std::cout << v2.Crossed() << "\n";
 	std::cout << v2.Angle() << "\n";
 	
 	vec<3> v3a = {1.0f, 1.1f, 1.2f};
 	vec<3> v3b = {-2.0f, -1.1f, 1.2f};
+	std::cout << sizeof(v3a) << "\n";
 	std::cout << Cross(v3a, v3b) << "\n";
 	std::cout << Dot(v3a, v3b) << "\n";
 	std::cout << (v3a | v3b | 0.0f) << "\n";
@@ -45,6 +49,7 @@ int main(int argc, char *argv[]){
 	
 	mat<3, 3> m = {vec<3>{1.0f, 2.0f, 3.0f}, vec<3>{4.0f, 5.0f, 6.0f}, vec<3>{7.0f, 8.0f, 9.0f}};
 	std::cout << m << "\n";
+	std::cout << sizeof(m) << "\n";
 	std::cout << m.Transposed() << "\n";
 	
 	m.TransposeInPlace();

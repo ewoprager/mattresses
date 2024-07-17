@@ -5,7 +5,6 @@
 #include <utility>
 #include <concepts>
 #include <type_traits>
-#include <functional>
 
 #include <macros.h>
 
@@ -30,7 +29,7 @@ concept function_c = requires (const T &function, param_ts&&... params) {
 vec &operator _operator (const vec &other){ \
 	[&]<size_t... indices>(std::index_sequence<indices...>){ \
 		(void([&](){ \
-			(*this)[indices] _operator other[indices]; \
+			data[indices] _operator other[indices]; \
 		}()), ...); \
 	}(std::make_index_sequence<N>{}); \
 	return *this; \
@@ -38,54 +37,64 @@ vec &operator _operator (const vec &other){ \
 vec &operator _operator (T f){ \
 	[&]<size_t... indices>(std::index_sequence<indices...>){ \
 		(void([&](){ \
-			(*this)[indices] _operator f; \
+			data[indices] _operator f; \
 		}()), ...); \
 	}(std::make_index_sequence<N>{}); \
 	return *this; \
 }
 
-template <size_t N, typename T=float> struct vec : std::array<T, N> {
+template <size_t N, typename T=float> struct vec {
+	
+	T data[N];
 	
 	static constexpr bool have_x = (N >= 1 && N <= 4);
 	static constexpr bool have_y = (N >= 2 && N <= 4);
 	static constexpr bool have_z = (N >= 3 && N <= 4);
 	static constexpr bool have_w = (N == 4);
 	
-	std::conditional_t<have_x, T &, mattresses::empty_t> x = [this]() -> std::conditional_t<have_x, T &, mattresses::empty_t> {
+	[[no_unique_address]] std::conditional_t<have_x, T &, mattresses::empty_t> x = [this]() -> std::conditional_t<have_x, T &, mattresses::empty_t> {
 		if constexpr (have_x) {
-			return std::array<T, N>::at(0);
+			return data[0];
 		} else {
 			return mattresses::empty_t{};
 		}
 	}();
 	
-	std::conditional_t<have_y, T &, mattresses::empty_t> y = [this]() -> std::conditional_t<have_y, T &, mattresses::empty_t> {
+	[[no_unique_address]] std::conditional_t<have_y, T &, mattresses::empty_t> y = [this]() -> std::conditional_t<have_y, T &, mattresses::empty_t> {
 		if constexpr (have_y) {
-			return std::array<T, N>::at(1);
+			return data[1];
 		} else {
 			return mattresses::empty_t{};
 		}
 	}();
 	
-	std::conditional_t<have_z, T &, mattresses::empty_t> z = [this]() -> std::conditional_t<have_z, T &, mattresses::empty_t> {
+	[[no_unique_address]] std::conditional_t<have_z, T &, mattresses::empty_t> z = [this]() -> std::conditional_t<have_z, T &, mattresses::empty_t> {
 		if constexpr (have_z) {
-			return std::array<T, N>::at(2);
+			return data[2];
 		} else {
 			return mattresses::empty_t{};
 		}
 	}();
 	
-	std::conditional_t<have_w, T &, mattresses::empty_t> w = [this]() -> std::conditional_t<have_w, T &, mattresses::empty_t> {
+	[[no_unique_address]] std::conditional_t<have_w, T &, mattresses::empty_t> w = [this]() -> std::conditional_t<have_w, T &, mattresses::empty_t> {
 		if constexpr (have_w) {
-			return std::array<T, N>::at(3);
+			return data[3];
 		} else {
 			return mattresses::empty_t{};
 		}
 	}();
+	
+	
+	T &operator[](size_t i){
+		return data[i];
+	}
+	const T &operator[](size_t i) const {
+		return data[i];
+	}
 	
 	T SqMag() const {
 		return [&]<size_t... indices>(std::index_sequence<indices...>){
-			return (((*this)[indices] * (*this)[indices]) + ...);
+			return ((data[indices] * data[indices]) + ...);
 		}(std::make_index_sequence<N>{});
 	}
 	
@@ -98,7 +107,7 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 	
 	template <typename other_t> operator vec<N, other_t>() const {
 		return [&]<size_t... indices>(std::index_sequence<indices...>){
-			return vec<N, other_t>{ static_cast<other_t>((*this)[indices]) ... };
+			return vec<N, other_t>{ static_cast<other_t>(data[indices]) ... };
 		}(std::make_index_sequence<N>{});
 	}
 	
@@ -107,7 +116,7 @@ template <size_t N, typename T=float> struct vec : std::array<T, N> {
 	vec &ForEach(const function_t &function){
 		[&]<size_t... indices>(std::index_sequence<indices...>){
 			(void([&](){
-				(*this)[indices] = function((*this)[indices]);
+				data[indices] = function(data[indices]);
 			}()), ...);
 		}(std::make_index_sequence<N>{});
 		return *this;
@@ -166,20 +175,20 @@ template <size_t N, typename T> T Dot(const vec<N, T> &lhs, const vec<N, T> &rhs
 
 template <size_t N1, size_t N2, typename T> vec<N1 + N2, T> operator|(const vec<N1, T> &lhs, const vec<N2, T> &rhs){
 	vec<N1 + N2, T> ret;
-	memcpy(ret.data(), lhs.data(), N1 * sizeof(T));
-	memcpy((T *)(ret.data()) + N1, rhs.data(), N2 * sizeof(T));
+	memcpy(&ret, &lhs, N1 * sizeof(T));
+	memcpy((T *)(&ret) + N1, &rhs, N2 * sizeof(T));
 	return ret;
 }
 template <size_t N, typename T> vec<N + 1, T> operator|(const vec<N, T> &lhs, T rhs){
 	vec<N + 1, T> ret;
-	memcpy(ret.data(), lhs.data(), N * sizeof(T));
+	memcpy(&ret, &lhs, N * sizeof(T));
 	ret[N] = rhs;
 	return ret;
 }
 template <size_t N, typename T> vec<N + 1, T> operator|(T lhs, const vec<N, T> &rhs){
 	vec<N + 1, T> ret;
 	ret[0] = lhs;
-	memcpy((T *)(ret.data()) + 1, rhs.data(), N * sizeof(T));
+	memcpy((T *)(&ret) + 1, &rhs, N * sizeof(T));
 	return ret;
 }
 
@@ -241,7 +250,7 @@ template <typename T> struct quat : public vec<4, T> {
 //	void operator=(const vec<2, T> &other) override { subset2_reference_parent::owner.element1 = other.x; subset2_reference_parent::owner.element2 = other.y; } \
 //	operator vec<2, T> () const override { return subset2_reference_parent::owner.element1##element2(); } \
 //}; \
-//element1##element2##_reference element1##element2##_r(){ return element1##element2##_reference(*this); }
+//element1##element2##_reference element1##element2##_r(){ return element1##element2##_referencedata; }
 //
 //#define _VECTOR_DEFINE_SUBSET_3(element1, element2, element3) \
 //vec<3, T> element1##element2##element3() const { return {element1, element2, element3}; } \
@@ -250,7 +259,7 @@ template <typename T> struct quat : public vec<4, T> {
 //	void operator=(const vec<3, T> &other) override { subset3_reference_parent::owner.element1 = other.x; subset3_reference_parent::owner.element2 = other.y; subset3_reference_parent::owner.element3 = other.z; } \
 //	operator vec<3, T> () const override { return subset3_reference_parent::owner.element1##element2##element3(); } \
 //}; \
-//element1##element2##element3##_reference element1##element2##element3##_r(){ return element1##element2##element3##_reference(*this); }
+//element1##element2##element3##_reference element1##element2##element3##_r(){ return element1##element2##element3##_referencedata; }
 //
 //
 
@@ -342,7 +351,7 @@ template <typename T> struct quat : public vec<4, T> {
 mat &operator _operator (const mat &other){ \
 	[&]<size_t... indices>(std::index_sequence<indices...>){ \
 		(void([&](){ \
-			(*this)[indices] _operator other[indices]; \
+			data[indices] _operator other[indices]; \
 		}()), ...); \
 	}(std::make_index_sequence<M>{}); \
 	return *this; \
@@ -350,7 +359,7 @@ mat &operator _operator (const mat &other){ \
 mat &operator _operator (T f){ \
 	[&]<size_t... indices>(std::index_sequence<indices...>){ \
 		(void([&](){ \
-			(*this)[indices] _operator f; \
+			data[indices] _operator f; \
 		}()), ...); \
 	}(std::make_index_sequence<M>{}); \
 	return *this; \
@@ -373,8 +382,17 @@ friend mat operator _operator (const mat &lhs, T rhs){ \
 	}(std::make_index_sequence<M>{}); \
 }
 
-template <size_t N, size_t M, typename T=float> struct mat : public std::array<vec<N, T>, M> {
+template <size_t N, size_t M, typename T=float> struct mat {
 
+	vec<N, T> data[M];
+	
+	vec<N, T> &operator[](size_t i){
+		return data[i];
+	}
+	const vec<N, T> &operator[](size_t i) const {
+		return data[i];
+	}
+	
 	struct const_row {
 		const_row(const mat &_matrix, uint8_t _n) : matrix(_matrix), n(_n) {}
 
@@ -436,7 +454,7 @@ template <size_t N, size_t M, typename T=float> struct mat : public std::array<v
 
 	mat<M, N, T> Transposed() const {
 		mat<M, N, T> ret;
-		for(int i=0; i<M; i++) ret(i) = (*this)[i];
+		for(int i=0; i<M; i++) ret(i) = data[i];
 		return ret;
 	}
 
@@ -454,14 +472,14 @@ template <size_t N, size_t M, typename T=float> struct mat : public std::array<v
 	// Single columns matrices
 	// -----
 	operator vec<N, T> () const requires(M == 1) {
-		return (*this)[0];
+		return data[0];
 	}
 	
 	// Single row matrices
 	// -----
 	operator vec<M, T> () const requires(N == 1) {
 		return [this]<size_t... indices>(std::index_sequence<indices...>){
-			return vec<M, T>{ (*this)[indices][0] ... };
+			return vec<M, T>{ data[indices][0] ... };
 		}(std::make_index_sequence<M>{});
 	}
 	
@@ -470,9 +488,9 @@ template <size_t N, size_t M, typename T=float> struct mat : public std::array<v
 	mat &TransposeInPlace() requires (M == N) {
 		for(int m=0; m<N; m++) for(int n=0; n<N; n++){
 			if(m == n) continue;
-			const T temp = (*this)[m][n];
-			(*this)[m][n] = (*this)[n][m];
-			(*this)[n][m] = temp;
+			const T temp = data[m][n];
+			data[m][n] = data[n][m];
+			data[n][m] = temp;
 		}
 		return *this;
 	}
@@ -492,22 +510,22 @@ template <size_t N, size_t M, typename T=float> struct mat : public std::array<v
 //		return ret;
 //	}
 	mat Inverted() const requires (M == 4 && N == 4) {
-		const T m00 = (*this)[0][0];
-		const T m01 = (*this)[0][1];
-		const T m02 = (*this)[0][2];
-		const T m03 = (*this)[0][3];
-		const T m10 = (*this)[1][0];
-		const T m11 = (*this)[1][1];
-		const T m12 = (*this)[1][2];
-		const T m13 = (*this)[1][3];
-		const T m20 = (*this)[2][0];
-		const T m21 = (*this)[2][1];
-		const T m22 = (*this)[2][2];
-		const T m23 = (*this)[2][3];
-		const T m30 = (*this)[3][0];
-		const T m31 = (*this)[3][1];
-		const T m32 = (*this)[3][2];
-		const T m33 = (*this)[3][3];
+		const T m00 = data[0][0];
+		const T m01 = data[0][1];
+		const T m02 = data[0][2];
+		const T m03 = data[0][3];
+		const T m10 = data[1][0];
+		const T m11 = data[1][1];
+		const T m12 = data[1][2];
+		const T m13 = data[1][3];
+		const T m20 = data[2][0];
+		const T m21 = data[2][1];
+		const T m22 = data[2][2];
+		const T m23 = data[2][3];
+		const T m30 = data[3][0];
+		const T m31 = data[3][1];
+		const T m32 = data[3][2];
+		const T m33 = data[3][3];
 		const T tmp_0  = m22 * m33;
 		const T tmp_1  = m32 * m23;
 		const T tmp_2  = m12 * m33;
