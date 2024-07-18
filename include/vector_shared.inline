@@ -1,0 +1,58 @@
+
+T &operator[](size_t n) { return ((T *)this)[n]; }
+const T &operator[](size_t n) const { return ((const T *)this)[n]; }
+
+T SqMag() const {
+	return [&]<size_t... indices>(std::index_sequence<indices...>){
+		return (((*this)[indices] * (*this)[indices]) + ...);
+	}(std::make_index_sequence<dimensionality>{});
+}
+vec Normalised() const { return *this / sqrtf(SqMag()); }
+
+DEFINE_VECTOR_MUTATION_OPERATOR_OVERLOADS(*=)
+DEFINE_VECTOR_MUTATION_OPERATOR_OVERLOADS(+=)
+DEFINE_VECTOR_MUTATION_OPERATOR_OVERLOADS(-=)
+DEFINE_VECTOR_MUTATION_OPERATOR_OVERLOADS(/=)
+
+template <typename other_t> operator vec<dimensionality, other_t> () const {
+	return [&]<size_t... indices>(std::index_sequence<indices...>){
+		return vec<dimensionality, other_t>{ static_cast<other_t>((*this)[indices]) ... };
+	}(std::make_index_sequence<dimensionality>{});
+}
+
+template <typename function_t>
+requires mattresses::function_c<function_t, T, T>
+vec &ForEach(const function_t &function){
+	[&]<size_t... indices>(std::index_sequence<indices...>){
+		(void([&](){
+			(*this)[indices] = function((*this)[indices]);
+		}()), ...);
+	}(std::make_index_sequence<dimensionality>{});
+	return *this;
+}
+
+static vec Zero(){
+	return [&]<size_t... indices>(std::index_sequence<indices...>){
+		return vec{ (void(indices), T(0)) ... };
+	}(std::make_index_sequence<dimensionality>{});
+}
+
+static vec Ones(){
+	return [&]<size_t... indices>(std::index_sequence<indices...>){
+		return vec{ (void(indices), T(1)) ... };
+	}(std::make_index_sequence<dimensionality>{});
+}
+
+static vec PositiveCartesianUnit(size_t n){
+	vec ret = vec::Zero();
+	ret[n] = T(1);
+	return ret;
+}
+
+template <typename function_t, typename... param_ts>
+requires mattresses::function_c<function_t, T, param_ts...>
+static vec GenerateEach(const function_t &function, param_ts&&... params){
+	return [&]<size_t... indices>(std::index_sequence<indices...>){
+		return vec{ (void(indices), function(std::forward<param_ts>(params)...)) ... };
+	}(std::make_index_sequence<dimensionality>{});
+}
