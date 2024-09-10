@@ -56,7 +56,11 @@ int main(int argc, char *argv[]){
 	std::cout << (v3a + v3b) << "\n";
 	std::cout << (v3a * v3b) << "\n";
 	
-	mat<3, 3> m = {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}}};
+	mat<3, 3> m = {{
+		{1.0f, 2.0f, 3.0f},
+		{4.0f, 5.0f, 6.0f},
+		{7.0f, 8.0f, 9.0f}
+	}};
 	std::cout << m << "\n";
 	std::cout << sizeof(m) << "\n";
 	std::cout << m.Transposed() << "\n";
@@ -64,7 +68,7 @@ int main(int argc, char *argv[]){
 	m.TransposeInPlace();
 	std::cout << m << "\n";
 	
-	mat<3, 1> mv = {{1.0f, 2.0f, 3.0f}};
+	mat<3, 1> mv = {{{1.0f, 2.0f, 3.0f}}};
 	std::cout << vec<3>(mv) << "\n";
 	
 	mat<1, 3> mvT = mv.Transposed();

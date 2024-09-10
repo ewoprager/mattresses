@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.24)
 set(CMAKE_INSTALL_PREFIX "/Users/eprager/local")
 
+file(
+GLOB HEADERS
+RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+CONDIFURE_DEPENDS
+"include/*"
+)
+
 project(mattresses CXX)
 
-add_library(${PROJECT_NAME} INTERFACE
-			"${CMAKE_CURRENT_SOURCE_DIR}/include/mattresses.h"
-			"${CMAKE_CURRENT_SOURCE_DIR}/include/vector_shared.inline"
+add_library(${PROJECT_NAME} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/${HEADERS}"
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
@@ -17,7 +22,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 target_link_libraries(${PROJECT_NAME} INTERFACE macros)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER mattresses.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/${HEADERS}")
 
 install(TARGETS ${PROJECT_NAME}
 		LIBRARY DESTINATION lib

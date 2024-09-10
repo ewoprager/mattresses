@@ -19,8 +19,8 @@ concept function_c = requires (const T &function, param_ts&&... params) {
 
 
 // ----- Vectors -----
-
-#define DEFINE_VECTOR_MUTATION_OPERATOR_OVERLOADS(_operator) \
+// -----
+#define MATTRESSES_VECTOR_MUTATION_OPERATOR_OVERLOADS(_operator) \
 vec &operator _operator (const vec &other){ \
 	[&]<size_t... indices>(std::index_sequence<indices...>){ \
 		(void([&](){ \
@@ -47,6 +47,9 @@ struct vec {
 #include "vector_shared.inline"
 };
 
+
+// General vector functions
+// -----
 template <size_t N, typename T> inline std::ostream &operator<<(std::ostream &stream, const vec<N, T> &vector){
 	stream << "(";
 	for(int n=0; n<N - 1; n++) stream << vector[n] << ", ";
@@ -79,7 +82,7 @@ template <size_t N, typename T> inline vec<N + 1, T> operator|(T lhs, const vec<
 	return ret;
 }
 
-#define DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(_operator) \
+#define MATTRESSES_VECTOR_BINARY_OPERATOR_OVERLOADS(_operator) \
 template <size_t N, typename T> vec<N, T> operator _operator (const vec<N, T> &lhs, const vec<N, T> &rhs){ \
 	return [&]<size_t... indices>(std::index_sequence<indices...>){ \
 		return vec<N, T>{(void(indices), lhs[indices] _operator rhs[indices]) ...}; \
@@ -96,10 +99,10 @@ template <size_t N, typename T> vec<N, T> operator _operator (T lhs, const vec<N
 	}(std::make_index_sequence<N>{}); \
 }
 												
-DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(*)
-DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(+)
-DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(-)
-DEFINE_VECTOR_BINARY_OPERATOR_OVERLOADS(/)
+MATTRESSES_VECTOR_BINARY_OPERATOR_OVERLOADS(*)
+MATTRESSES_VECTOR_BINARY_OPERATOR_OVERLOADS(+)
+MATTRESSES_VECTOR_BINARY_OPERATOR_OVERLOADS(-)
+MATTRESSES_VECTOR_BINARY_OPERATOR_OVERLOADS(/)
 
 template <size_t N, typename T> inline bool operator==(const vec<N, T> &lhs, const vec<N, T> &rhs){
 	return [&]<size_t... indices>(std::index_sequence<indices...>){
@@ -107,7 +110,7 @@ template <size_t N, typename T> inline bool operator==(const vec<N, T> &lhs, con
 	}(std::make_index_sequence<N>{});
 }
 
-#define DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(N) \
+#define MATTRESSES_VECTOR_SUBSET_N_REFERENCE_PARENT(N) \
 struct subset##N##_reference_parent { \
 	subset##N##_reference_parent(vec &_owner) : owner(_owner) {} \
 	 \
@@ -118,7 +121,7 @@ protected: \
 	vec &owner; \
 };
 
-#define _VECTOR_DEFINE_SUBSET_2(element1, element2) \
+#define MATTRESSES_DEFINE_VECTOR_SUBSET_2(element1, element2) \
 vec<2, T> element1##element2() const { return {element1, element2}; } \
 struct element1##element2##_reference : public subset2_reference_parent { \
 	element1##element2##_reference(vec &_owner) : subset2_reference_parent(_owner) {} \
@@ -127,7 +130,7 @@ struct element1##element2##_reference : public subset2_reference_parent { \
 }; \
 element1##element2##_reference element1##element2##_r(){ return element1##element2##_reference(*this); }
 
-#define _VECTOR_DEFINE_SUBSET_3(element1, element2, element3) \
+#define MATTRESSES_DEFINE_VECTOR_SUBSET_3(element1, element2, element3) \
 vec<3, T> element1##element2##element3() const { return {element1, element2, element3}; } \
 struct element1##element2##element3##_reference : public subset3_reference_parent { \
 	element1##element2##element3##_reference(vec &_owner) : subset3_reference_parent(_owner) {} \
@@ -136,6 +139,9 @@ struct element1##element2##element3##_reference : public subset3_reference_paren
 }; \
 element1##element2##element3##_reference element1##element2##element3##_r(){ return element1##element2##element3##_reference(*this); }
 
+
+// 2-vector
+// -----
 template <typename T>
 struct vec<2, T> {
 	static constexpr size_t dimensionality = 2;
@@ -158,15 +164,18 @@ struct vec<2, T> {
 #include "vector_shared.inline"
 };
 
+
+// 3-vector
+// -----
 template <typename T>
 struct vec<3, T> {
 	static constexpr size_t dimensionality = 3;
 	
 	T x, y, z;
 	
-	DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
+	MATTRESSES_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
 
-	FOR_EACH_PAIR(_VECTOR_DEFINE_SUBSET_2,
+	FOR_EACH_PAIR(MATTRESSES_DEFINE_VECTOR_SUBSET_2,
 				  x, y,
 				  y, x,
 				  x, z,
@@ -178,6 +187,13 @@ struct vec<3, T> {
 #include "vector_shared.inline"
 };
 
+template<typename T> vec<3, T> Cross(const vec<3, T> &lhs, const vec<3, T> &rhs){
+	return {lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x};
+}
+
+
+// 4-vector
+// -----
 template <typename T>
 struct vec<4, T>{
 	static constexpr size_t dimensionality = 4;
@@ -185,9 +201,9 @@ struct vec<4, T>{
 	T x, y, z, w;
 	
 	
-	DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
+	MATTRESSES_VECTOR_SUBSET_N_REFERENCE_PARENT(2)
 
-	FOR_EACH_PAIR(_VECTOR_DEFINE_SUBSET_2,
+	FOR_EACH_PAIR(MATTRESSES_DEFINE_VECTOR_SUBSET_2,
 				  x, y,
 				  y, x,
 				  
@@ -207,9 +223,9 @@ struct vec<4, T>{
 				  w, z
 				  )
 
-	DEFINE_VECTOR_SUBSET_N_REFERENCE_PARENT(3)
+	MATTRESSES_VECTOR_SUBSET_N_REFERENCE_PARENT(3)
 
-	FOR_EACH_TRIPLE(_VECTOR_DEFINE_SUBSET_3,
+	FOR_EACH_TRIPLE(MATTRESSES_DEFINE_VECTOR_SUBSET_3,
 				    x, y, z,
 				    z, x, y,
 				    y, z, x,
@@ -242,134 +258,49 @@ struct vec<4, T>{
 #include "vector_shared.inline"
 };
 
-template<typename T> vec<3, T> Cross(const vec<3, T> &lhs, const vec<3, T> &rhs){
-	return {lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x};
-}
 
-
+// ----- Matrices -----
+// -----
 
 // N x M, meaning N rows & M columns
-#define _MATRIX_TEMPLATE_PARAMETER(param_name) size_t param_name
-#define START_MATRIX_TEMPLATE(N, M, ...) \
-template < __VA_OPT__( COMMA_SEPARATED_FOR_EACH(_MATRIX_TEMPLATE_PARAMETER, __VA_ARGS__) ) __VA_OPT__(,) typename T=float> struct mat { \
-_CONTINUE_MATRIX_TEMPLATE(N, M)
-
-#define START_MATRIX_TEMPLATE_SPECIALISATION(N, M, ...) \
-template < __VA_OPT__( COMMA_SEPARATED_FOR_EACH(_MATRIX_TEMPLATE_PARAMETER, __VA_ARGS__) ) __VA_OPT__(,) typename T> struct mat<N, M, T> { \
-_CONTINUE_MATRIX_TEMPLATE(N, M)
-
-#define _MATRIX_UNARY_OPERATOR_OVERLOADS(M, _operator) \
+#define MATTRESSES_MATRIX_UNARY_OPERATOR_OVERLOADS(_operator) \
 mat &operator _operator (const mat &other){ \
-	for(int m=0; m<M; m++) columns[m] _operator other[m]; \
+	for(int m=0; m<columnCount; m++) columns[m] _operator other[m]; \
 	return *this; \
 } \
 mat &operator _operator (T f){ \
-	for(int m=0; m<M; m++) columns[m] _operator f; \
+	for(int m=0; m<columnCount; m++) columns[m] _operator f; \
 	return *this; \
 }
 
-#define _MATRIX_BINARY_OPERATOR_OVERLOADS(M, _operator) \
+#define MATTRESSES_MATRIX_BINARY_OPERATOR_OVERLOADS(_operator) \
 friend mat operator _operator (const mat &lhs, const mat &rhs){ \
 	mat ret; \
-	for(int m=0; m<M; m++) ret[m] = lhs[m] _operator rhs[m]; \
+	for(int m=0; m<columnCount; m++) ret[m] = lhs[m] _operator rhs[m]; \
 	return ret; \
 } \
 friend mat operator _operator (T lhs, const mat &rhs){ \
 	mat ret; \
-	for(int m=0; m<M; m++) ret[m] = lhs _operator rhs[m]; \
+	for(int m=0; m<columnCount; m++) ret[m] = lhs _operator rhs[m]; \
 	return ret; \
 } \
 friend mat operator _operator (const mat &lhs, T rhs){ \
 	mat ret; \
-	for(int m=0; m<M; m++) ret[m] = lhs[m] _operator rhs; \
+	for(int m=0; m<columnCount; m++) ret[m] = lhs[m] _operator rhs; \
 	return ret; \
 }
 
-#define _CONTINUE_MATRIX_TEMPLATE(N, M) \
-	const vec<N, T> &operator[](size_t m) const { return columns[m]; } \
-	vec<N, T> &operator[](size_t m){ return columns[m]; } \
-\
-	struct const_row { \
-		const_row(const mat &_matrix, size_t _n) : matrix(_matrix), n(_n) {} \
-\
-		const T &operator[](size_t m) const { return matrix[m][n]; } \
-\
-        operator vec<M, T> () const { \
-            vec<M, T> ret; \
-            for(int m=0; m<M; m++) ret[m] = matrix[m][n];\
-            return ret; \
-        } \
-\
-		friend std::ostream &operator<<(std::ostream &stream, const const_row &matrix_row){ \
-			stream << "["; \
-			for(int m=0; m<M - 1; m++) stream << matrix_row[m] << ", "; \
-			stream << matrix_row[M - 1] << "]"; \
-			return stream; \
-		} \
-\
-	private: \
-		const mat &matrix; \
-		const size_t n; \
-	}; \
-	struct row { \
-		row(mat &_matrix, size_t _n) : matrix(_matrix), n(_n) {} \
-\
-		row &operator=(const vec<M, T> &col){ \
-			for(int i=0; i<M; i++) matrix[i][n] = col[i]; \
-			return *this; \
-		} \
-\
-		T &operator[](size_t m) const { return matrix[m][n]; } \
-\
-		operator const_row() const { return const_row(matrix, n); } \
-        operator vec<M, T> () const { \
-            vec<M, T> ret; \
-            for(int m=0; m<M; m++) ret[m] = matrix[m][n];\
-            return ret; \
-        } \
-\
-		friend std::ostream &operator<<(std::ostream &stream, const row &matrix_row){ \
-			stream << "["; \
-			for(int m=0; m<M - 1; m++) stream << matrix_row[m] << ", "; \
-			stream << matrix_row[M - 1] << "]"; \
-			return stream; \
-		} \
-\
-	private: \
-		mat &matrix; \
-		const size_t n; \
-	}; \
-\
-	const_row operator()(size_t n) const { return const_row(*this, n); } \
-	row operator()(size_t n){ return row(*this, n); } \
-\
-	_MATRIX_UNARY_OPERATOR_OVERLOADS(M, *=) \
-	_MATRIX_UNARY_OPERATOR_OVERLOADS(M, +=) \
-	_MATRIX_UNARY_OPERATOR_OVERLOADS(M, -=) \
-	_MATRIX_UNARY_OPERATOR_OVERLOADS(M, /=) \
-\
-	vec<N, T> columns[M]; \
-\
-	mat<M, N, T> Transposed() const { \
-		mat<M, N, T> ret; \
-		for(int i=0; i<M; i++) ret(i) = columns[i]; \
-		return ret; \
-	} \
-\
-	_MATRIX_BINARY_OPERATOR_OVERLOADS(M, +) \
-	_MATRIX_BINARY_OPERATOR_OVERLOADS(M, -) \
-	_MATRIX_BINARY_OPERATOR_OVERLOADS(M, *) \
-	_MATRIX_BINARY_OPERATOR_OVERLOADS(M, /) \
-\
-	static mat Zeros(){ mat ret; for(int i=0; i<M; i++) ret[i] = vec<N, T>::Zero(); return ret; }
+template <size_t N, size_t M, typename T=float>
+struct mat {
+	static constexpr size_t rowCount = N;
+	static constexpr size_t columnCount = M;
+	
+#include "matrix_shared.inline"
+};
 
-#define FINISH_MATRIX_TEMPLATE };
 
-// the main template definition
-START_MATRIX_TEMPLATE(N, M, N, M)
-FINISH_MATRIX_TEMPLATE
-
-// general matrix template functions
+// General matrix functions
+// -----
 template <size_t N, size_t M, typename T> inline std::ostream &operator<<(std::ostream &stream, const mat<N, M, T> &matrix){
 	stream << "\n";
 	stream << "/ ";
@@ -431,200 +362,218 @@ template <size_t N, size_t M, typename T> inline mat<N, M + 1, T> operator |(con
     return ret;
 }
 
-// for square matrices
-#define DEFINE_SQUARE_MATRIX_SPECIALISATIONS(N) \
-mat &TransposeInPlace(){ \
-	for(int m=0; m<N; m++) for(int n=0; n<N; n++){ \
-		if(m == n) continue; \
-		const T temp = columns[m][n]; \
-		columns[m][n] = columns[n][m]; \
-		columns[n][m] = temp; \
-	} \
-	return *this; \
-} \
-static mat Identity(){ \
-	mat ret; \
-	for(int i=0; i<N; i++) ret[i] = vec<N, T>::PositiveCartesianUnit(i); \
-	return ret; \
-}
 
-START_MATRIX_TEMPLATE_SPECIALISATION(N, N, N)
-DEFINE_SQUARE_MATRIX_SPECIALISATIONS(N)
-FINISH_MATRIX_TEMPLATE
+// Square matrices
+// -----
+template <size_t N, typename T>
+struct mat<N, N, T> {
+	static constexpr size_t rowCount = N;
+	static constexpr size_t columnCount = N;
+	
+#include "square_matrix_shared.inline"
+	
+#include "matrix_shared.inline"
+};
 
-// for 4x4 matrices
-START_MATRIX_TEMPLATE_SPECIALISATION(4, 4)
-DEFINE_SQUARE_MATRIX_SPECIALISATIONS(4)
-// member functions
-mat ScaledExcludingTranslation(const vec<3, T> &scaling){
-	const vec<3, T> savedTranslation = columns[3].xyz();
-	mat ret = Scaling(scaling) & *this;
-	ret[3].xyz_r() = savedTranslation;
-	return ret;
-}
-mat Inverted() const {
-	const T m00 = columns[0][0];
-	const T m01 = columns[0][1];
-	const T m02 = columns[0][2];
-	const T m03 = columns[0][3];
-	const T m10 = columns[1][0];
-	const T m11 = columns[1][1];
-	const T m12 = columns[1][2];
-	const T m13 = columns[1][3];
-	const T m20 = columns[2][0];
-	const T m21 = columns[2][1];
-	const T m22 = columns[2][2];
-	const T m23 = columns[2][3];
-	const T m30 = columns[3][0];
-	const T m31 = columns[3][1];
-	const T m32 = columns[3][2];
-	const T m33 = columns[3][3];
-	const T tmp_0  = m22 * m33;
-	const T tmp_1  = m32 * m23;
-	const T tmp_2  = m12 * m33;
-	const T tmp_3  = m32 * m13;
-	const T tmp_4  = m12 * m23;
-	const T tmp_5  = m22 * m13;
-	const T tmp_6  = m02 * m33;
-	const T tmp_7  = m32 * m03;
-	const T tmp_8  = m02 * m23;
-	const T tmp_9  = m22 * m03;
-	const T tmp_10 = m02 * m13;
-	const T tmp_11 = m12 * m03;
-	const T tmp_12 = m20 * m31;
-	const T tmp_13 = m30 * m21;
-	const T tmp_14 = m10 * m31;
-	const T tmp_15 = m30 * m11;
-	const T tmp_16 = m10 * m21;
-	const T tmp_17 = m20 * m11;
-	const T tmp_18 = m00 * m31;
-	const T tmp_19 = m30 * m01;
-	const T tmp_20 = m00 * m21;
-	const T tmp_21 = m20 * m01;
-	const T tmp_22 = m00 * m11;
-	const T tmp_23 = m10 * m01;
 
-	const T t0 = (tmp_0 * m11 + tmp_3 * m21 + tmp_4 * m31) - (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
-	const T t1 = (tmp_1 * m01 + tmp_6 * m21 + tmp_9 * m31) - (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
-	const T t2 = (tmp_2 * m01 + tmp_7 * m11 + tmp_10 * m31) - (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
-	const T t3 = (tmp_5 * m01 + tmp_8 * m11 + tmp_11 * m21) - (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+// Single columns matrices
+// -----
+template <size_t N, typename T>
+struct mat<N, 1, T> {
+	static constexpr size_t rowCount = N;
+	static constexpr size_t columnCount = 1;
+	
+	operator vec<N, T> () const {
+		return columns[0];
+	}
+	
+#include "matrix_shared.inline"
+};
 
-	const T d = T(1.0) / (m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3);
 
-	return d * (mat){{
-		{t0, t1, t2, t3},
-		{
-			((tmp_1 * m10 + tmp_2 * m20 + tmp_5 * m30) - (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30)),
-			((tmp_0 * m00 + tmp_7 * m20 + tmp_8 * m30) - (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30)),
-			((tmp_3 * m00 + tmp_6 * m10 + tmp_11 * m30) - (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30)),
-			((tmp_4 * m00 + tmp_9 * m10 + tmp_10 * m20) - (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20))
-		},
-		{
-			((tmp_12 * m13 + tmp_15 * m23 + tmp_16 * m33) - (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33)),
-			((tmp_13 * m03 + tmp_18 * m23 + tmp_21 * m33) - (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33)),
-			((tmp_14 * m03 + tmp_19 * m13 + tmp_22 * m33) - (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33)),
-			((tmp_17 * m03 + tmp_20 * m13 + tmp_23 * m23) - (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23))
-		},
-		{
-			((tmp_14 * m22 + tmp_17 * m32 + tmp_13 * m12) - (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22)),
-			((tmp_20 * m32 + tmp_12 * m02 + tmp_19 * m22) - (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02)),
-			((tmp_18 * m12 + tmp_23 * m32 + tmp_15 * m02) - (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12)),
-			((tmp_22 * m22 + tmp_16 * m02 + tmp_21 * m12) - (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02))
-		}
-	}};
-}
+// Single row matrices
+// -----
+template <size_t M, typename T>
+struct mat<1, M, T> {
+	static constexpr size_t rowCount = 1;
+	static constexpr size_t columnCount = M;
+	
+	operator vec<M, T> () const {
+		return [this]<size_t... indices>(std::index_sequence<indices...>){
+			return vec<M, T>{ columns[indices][0] ... };
+		}(std::make_index_sequence<columnCount>{});
+	}
+	
+#include "matrix_shared.inline"
+};
 
-// now static methods
-static mat XRotation(double angle){
-	const T c = cos(angle);
-	const T s = sin(angle);
-	return {{
-		{1.0, 0.0, 0.0, 0.0},
-		{0.0,   c,   s, 0.0},
-		{0.0,  -s,   c, 0.0},
-		{0.0, 0.0, 0.0, 1.0}
-	}};
-}
-static mat YRotation(double angle){
-	const T c = cos(angle);
-	const T s = sin(angle);
-	return {{
-		{  c, 0.0,  -s, 0.0},
-		{0.0, 1.0, 0.0, 0.0},
-		{  s, 0.0,   c, 0.0},
-		{0.0, 0.0, 0.0, 1.0}
-	}};
-}
-static mat ZRotation(double angle){
-	const T c = cos(angle);
-	const T s = sin(angle);
-	return {{
-		{  c,   s, 0.0, 0.0},
-		{ -s,   c, 0.0, 0.0},
-		{0.0, 0.0, 1.0, 0.0},
-		{0.0, 0.0, 0.0, 1.0}
-	}};
-}
-static mat PerspectiveProjection(const double angleOfView, const double aspectRatio, const double frustumNear, const double frustumFar){
-	const T f = tan(0.5 * (M_PI - angleOfView));
-	const T frustumDepthInverse = 1.0 / (frustumNear - frustumFar);
-	return {{
-		{T(f / aspectRatio), 0.0,                                                  0.0,  0.0},
-		{            0.0,   f,                                                  0.0,  0.0},
-		{            0.0, 0.0,     T((frustumNear + frustumFar) * frustumDepthInverse), -1.0},
-		{            0.0, 0.0, T(frustumNear * frustumFar * frustumDepthInverse * 2.0),  0.0}
-	}};
-}
-static mat OrthographicProjection(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar){
-	const T dirInv = 1.0 / (right - left);
-	const T heightInv = 1.0 / (top - bottom);
-	const T zDeltaInv = 1.0 / (zFar - zNear);
-	return {{
-		{T(2.0 * dirInv), 			   0.0,        0.0,    T(-(right + left)*dirInv)},
-		{	  	  0.0, T(2.0 * heightInv),        0.0, T(-(top + bottom)*heightInv)},
-		{		  0.0,             0.0, T(-zDeltaInv),           T(zNear*zDeltaInv)},
-		{		  0.0,		       0.0,        0.0,		                  1.0}
-	}};
-}
-static mat Translation(const vec<3, T> &vector){
-	return {{
-		vec<4, T>::PositiveCartesianUnit(0),
-		vec<4, T>::PositiveCartesianUnit(1),
-		vec<4, T>::PositiveCartesianUnit(2),
-		vector | T(1.0)
-	}};
-}
-static mat LookAt(const vec<3, T> &position, const vec<3, T> &target, const vec<3, T> &unitUp){
-	const vec<3, T> zAxis = (position - target).Normalised();
-	const vec<3, T> xAxis = Cross(unitUp, zAxis).Normalised();
-	const vec<3, T> yAxis = Cross(zAxis, xAxis).Normalised();
-	return {{
-		xAxis | T(0.0),
-		yAxis | T(0.0),
-		zAxis | T(0.0),
-		position | T(1.0)
-	}};
-}
-static mat Scaling(const vec<3, T> &scaling){
-	return {{
-		{scaling.x, 0.0, 0.0, 0.0},
-		{0.0, scaling.y, 0.0, 0.0},
-		{0.0, 0.0, scaling.z, 0.0},
-		{0.0, 0.0, 0.0, 1.0}
-	}};
-}
-FINISH_MATRIX_TEMPLATE
 
-// for single columns matrices
-START_MATRIX_TEMPLATE_SPECIALISATION(N, 1, N)
-operator vec<N, T> () const {
-    return columns[0];
-}
-FINISH_MATRIX_TEMPLATE
+// 4x4 matrices
+// -----
+template <typename T>
+struct mat<4, 4, T> {
+	static constexpr size_t rowCount = 4;
+	static constexpr size_t columnCount = 4;
+	
+	mat ScaledExcludingTranslation(const vec<3, T> &scaling){
+		const vec<3, T> savedTranslation = columns[3].xyz();
+		mat ret = Scaling(scaling) & *this;
+		ret[3].xyz_r() = savedTranslation;
+		return ret;
+	}
+	mat Inverted() const {
+		const T m00 = columns[0][0];
+		const T m01 = columns[0][1];
+		const T m02 = columns[0][2];
+		const T m03 = columns[0][3];
+		const T m10 = columns[1][0];
+		const T m11 = columns[1][1];
+		const T m12 = columns[1][2];
+		const T m13 = columns[1][3];
+		const T m20 = columns[2][0];
+		const T m21 = columns[2][1];
+		const T m22 = columns[2][2];
+		const T m23 = columns[2][3];
+		const T m30 = columns[3][0];
+		const T m31 = columns[3][1];
+		const T m32 = columns[3][2];
+		const T m33 = columns[3][3];
+		const T tmp_0  = m22 * m33;
+		const T tmp_1  = m32 * m23;
+		const T tmp_2  = m12 * m33;
+		const T tmp_3  = m32 * m13;
+		const T tmp_4  = m12 * m23;
+		const T tmp_5  = m22 * m13;
+		const T tmp_6  = m02 * m33;
+		const T tmp_7  = m32 * m03;
+		const T tmp_8  = m02 * m23;
+		const T tmp_9  = m22 * m03;
+		const T tmp_10 = m02 * m13;
+		const T tmp_11 = m12 * m03;
+		const T tmp_12 = m20 * m31;
+		const T tmp_13 = m30 * m21;
+		const T tmp_14 = m10 * m31;
+		const T tmp_15 = m30 * m11;
+		const T tmp_16 = m10 * m21;
+		const T tmp_17 = m20 * m11;
+		const T tmp_18 = m00 * m31;
+		const T tmp_19 = m30 * m01;
+		const T tmp_20 = m00 * m21;
+		const T tmp_21 = m20 * m01;
+		const T tmp_22 = m00 * m11;
+		const T tmp_23 = m10 * m01;
 
-// for single row matrices
-START_MATRIX_TEMPLATE_SPECIALISATION(1, M, M)
-operator vec<M, T> () const {
-    return (*this)(0);
-}
-FINISH_MATRIX_TEMPLATE
+		const T t0 = (tmp_0 * m11 + tmp_3 * m21 + tmp_4 * m31) - (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
+		const T t1 = (tmp_1 * m01 + tmp_6 * m21 + tmp_9 * m31) - (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
+		const T t2 = (tmp_2 * m01 + tmp_7 * m11 + tmp_10 * m31) - (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
+		const T t3 = (tmp_5 * m01 + tmp_8 * m11 + tmp_11 * m21) - (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+
+		const T d = T(1.0) / (m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3);
+
+		return d * (mat){{
+			{t0, t1, t2, t3},
+			{
+				((tmp_1 * m10 + tmp_2 * m20 + tmp_5 * m30) - (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30)),
+				((tmp_0 * m00 + tmp_7 * m20 + tmp_8 * m30) - (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30)),
+				((tmp_3 * m00 + tmp_6 * m10 + tmp_11 * m30) - (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30)),
+				((tmp_4 * m00 + tmp_9 * m10 + tmp_10 * m20) - (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20))
+			},
+			{
+				((tmp_12 * m13 + tmp_15 * m23 + tmp_16 * m33) - (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33)),
+				((tmp_13 * m03 + tmp_18 * m23 + tmp_21 * m33) - (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33)),
+				((tmp_14 * m03 + tmp_19 * m13 + tmp_22 * m33) - (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33)),
+				((tmp_17 * m03 + tmp_20 * m13 + tmp_23 * m23) - (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23))
+			},
+			{
+				((tmp_14 * m22 + tmp_17 * m32 + tmp_13 * m12) - (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22)),
+				((tmp_20 * m32 + tmp_12 * m02 + tmp_19 * m22) - (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02)),
+				((tmp_18 * m12 + tmp_23 * m32 + tmp_15 * m02) - (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12)),
+				((tmp_22 * m22 + tmp_16 * m02 + tmp_21 * m12) - (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02))
+			}
+		}};
+	}
+
+	// now static methods
+	static mat XRotation(double angle){
+		const T c = cos(angle);
+		const T s = sin(angle);
+		return {{
+			{1.0, 0.0, 0.0, 0.0},
+			{0.0,   c,   s, 0.0},
+			{0.0,  -s,   c, 0.0},
+			{0.0, 0.0, 0.0, 1.0}
+		}};
+	}
+	static mat YRotation(double angle){
+		const T c = cos(angle);
+		const T s = sin(angle);
+		return {{
+			{  c, 0.0,  -s, 0.0},
+			{0.0, 1.0, 0.0, 0.0},
+			{  s, 0.0,   c, 0.0},
+			{0.0, 0.0, 0.0, 1.0}
+		}};
+	}
+	static mat ZRotation(double angle){
+		const T c = cos(angle);
+		const T s = sin(angle);
+		return {{
+			{  c,   s, 0.0, 0.0},
+			{ -s,   c, 0.0, 0.0},
+			{0.0, 0.0, 1.0, 0.0},
+			{0.0, 0.0, 0.0, 1.0}
+		}};
+	}
+	static mat PerspectiveProjection(const double angleOfView, const double aspectRatio, const double frustumNear, const double frustumFar){
+		const T f = tan(0.5 * (M_PI - angleOfView));
+		const T frustumDepthInverse = 1.0 / (frustumNear - frustumFar);
+		return {{
+			{T(f / aspectRatio), 0.0,                                                  0.0,  0.0},
+			{            0.0,   f,                                                  0.0,  0.0},
+			{            0.0, 0.0,     T((frustumNear + frustumFar) * frustumDepthInverse), -1.0},
+			{            0.0, 0.0, T(frustumNear * frustumFar * frustumDepthInverse * 2.0),  0.0}
+		}};
+	}
+	static mat OrthographicProjection(const float left, const float right, const float bottom, const float top, const float zNear, const float zFar){
+		const T dirInv = 1.0 / (right - left);
+		const T heightInv = 1.0 / (top - bottom);
+		const T zDeltaInv = 1.0 / (zFar - zNear);
+		return {{
+			{T(2.0 * dirInv), 			   0.0,        0.0,    T(-(right + left)*dirInv)},
+			{	  	  0.0, T(2.0 * heightInv),        0.0, T(-(top + bottom)*heightInv)},
+			{		  0.0,             0.0, T(-zDeltaInv),           T(zNear*zDeltaInv)},
+			{		  0.0,		       0.0,        0.0,		                  1.0}
+		}};
+	}
+	static mat Translation(const vec<3, T> &vector){
+		return {{
+			vec<4, T>::PositiveCartesianUnit(0),
+			vec<4, T>::PositiveCartesianUnit(1),
+			vec<4, T>::PositiveCartesianUnit(2),
+			vector | T(1.0)
+		}};
+	}
+	static mat LookAt(const vec<3, T> &position, const vec<3, T> &target, const vec<3, T> &unitUp){
+		const vec<3, T> zAxis = (position - target).Normalised();
+		const vec<3, T> xAxis = Cross(unitUp, zAxis).Normalised();
+		const vec<3, T> yAxis = Cross(zAxis, xAxis).Normalised();
+		return {{
+			xAxis | T(0.0),
+			yAxis | T(0.0),
+			zAxis | T(0.0),
+			position | T(1.0)
+		}};
+	}
+	static mat Scaling(const vec<3, T> &scaling){
+		return {{
+			{scaling.x, 0.0, 0.0, 0.0},
+			{0.0, scaling.y, 0.0, 0.0},
+			{0.0, 0.0, scaling.z, 0.0},
+			{0.0, 0.0, 0.0, 1.0}
+		}};
+	}
+	
+#include "square_matrix_shared.inline"
+	
+#include "matrix_shared.inline"
+};
