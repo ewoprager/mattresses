@@ -1,0 +1,3 @@
+[submodule "External/macros"]
+	path = External/macros
+	url = git@github.com:ewoprager/macros.git
